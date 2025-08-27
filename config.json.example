@@ -1,0 +1,16 @@
+{
+	"Token": "Hello World!",
+	"Server": 1234,
+	"ManagementRole": 5678,
+	"MasterChannel": 9101112,
+	"WatchChannels": [ 13141516 ],
+	"UnclaimedTicketCategory": 17181920,
+	"ClaimedTicketCategory": 21222324,
+	"ClosedTicketCategory": 25262728,
+	"Categories": [
+		"I Want To Make a Ticket",
+		"I Dont Want To Make a Ticket",
+		"I love Tickets",
+		"I Hate Tickets"
+	]
+}
