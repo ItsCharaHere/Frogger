@@ -27,10 +27,19 @@ namespace Frogger
             return builder.Build();
         }
 
-        public static async Task<Task> HandleDropdownSelection(SocketMessageComponent arg) 
+        public static async Task<Task> HandleDropdownSelection(SocketMessageComponent arg)
         {
-            Random rand = new Random();
+            var ticketNum = 1;
             var guild = Bot._client.GetGuild(Config._config.Server);
+            foreach (var channel in guild.TextChannels)
+            {
+                if (channel.Topic == null){ continue; }
+                if (channel.Topic.Contains(arg.Data.Values.First()))
+                {
+                    ticketNum++;
+                }
+            }
+
             List<Overwrite> permissions = new List<Overwrite>
             {
                 new Overwrite(guild.EveryoneRole.Id, PermissionTarget.Role,
@@ -41,10 +50,11 @@ namespace Frogger
                     new OverwritePermissions(viewChannel: PermValue.Allow))
             };
 
-            var ticketChannel = await guild.CreateTextChannelAsync("ticket-" + arg.Data.Values.First()+ '-' +rand.Next(1, 200), options =>
+            var ticketChannel = await guild.CreateTextChannelAsync("ticket-" + arg.Data.Values.First()+ '-' + ticketNum, options =>
             {
                 options.CategoryId = Config._config.UnclaimedTicketCategory;
                 options.PermissionOverwrites = permissions;
+                options.Topic = arg.Data.Values.First();
             }
             );
 
@@ -112,8 +122,17 @@ namespace Frogger
         {
             if (Config._config.WatchChannels.Contains(arg.Channel.Id))
             {
-                Random rand = new Random();
+                var ticketNum = 1;
                 var guild = Bot._client.GetGuild(Config._config.Server);
+                foreach (var channel in guild.TextChannels)
+                {
+                    if (channel.Topic == null) { continue; }
+                    if (channel.Topic.Contains("text"))
+                    {
+                        ticketNum++;
+                    }
+                }
+
                 List<Overwrite> permissions = new List<Overwrite>
                 {
                   new Overwrite(guild.EveryoneRole.Id, PermissionTarget.Role,
@@ -122,10 +141,11 @@ namespace Frogger
                       new OverwritePermissions(viewChannel: PermValue.Allow)),
                 };
             
-                var ticketChannel = await guild.CreateTextChannelAsync("ticket-text-message-" + rand.Next(1, 200), options =>
+                var ticketChannel = await guild.CreateTextChannelAsync("ticket-text-message-" + ticketNum, options =>
                     {
-                    options.CategoryId = Config._config.UnclaimedTicketCategory;
-                    options.PermissionOverwrites = permissions;
+                        options.CategoryId = Config._config.UnclaimedTicketCategory;
+                        options.PermissionOverwrites = permissions;
+                        options.Topic = "text";
                     }
                 );
                 await ticketChannel.SendMessageAsync(text: $"<@&{Config._config.ManagementRole}> Watched Channel Ticket: \n {arg.Content}", components: ConstructButtons());
