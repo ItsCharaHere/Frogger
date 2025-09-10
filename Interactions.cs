@@ -54,7 +54,7 @@ namespace Frogger
             {
                 options.CategoryId = Config._config.UnclaimedTicketCategory;
                 options.PermissionOverwrites = permissions;
-                options.Topic = arg.Data.Values.First();
+                options.Topic = $"{arg.Data.Values.First()}||{arg.User.Id}";
             }
             );
 
@@ -67,6 +67,7 @@ namespace Frogger
             var guild = Bot._client.GetGuild(Config._config.Server);
             var role = guild.GetRole(Config._config.ManagementRole);
             var channel = guild.GetTextChannel(arg.Channel.Id);
+            var archiveChannel = guild.GetTextChannel(Config._config.ArchiveChannel);
 
             switch (arg.Data.CustomId)
             {
@@ -110,6 +111,22 @@ namespace Frogger
                             x.CategoryId = Config._config.ClosedTicketCategory;
                             x.PermissionOverwrites = permissions;
                         });
+                        string exportPath = await Export.exportChat(arg);
+                        if (channel.Topic != "text")
+                        {
+                            var ticketAuthorId = channel.Topic.Split("||")[1];
+                            if (ticketAuthorId != null)
+                            {
+                                SocketUser ticketAuthor = Bot._client.GetUser(ulong.Parse(ticketAuthorId));
+                                if (ticketAuthor != null)
+                                {
+                                    var tickerAuthorDM = await ticketAuthor.CreateDMChannelAsync();
+                                    await tickerAuthorDM.SendFileAsync(exportPath, text: "Here is a chat export of your ticket!");
+                                }
+                            }
+                        }
+                        await archiveChannel.SendFileAsync(exportPath, text: $"Ticket Closed by <@{arg.User.Id}>, Message logs avaliable via attached file.");
+
                         await channel.SendMessageAsync($"<@{arg.User.Id}> Has Closed this ticket!");
                     }
                     break;

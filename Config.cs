@@ -10,6 +10,7 @@ namespace Frogger
         public ulong ManagementRole { get; set; }
         public ulong MasterChannel { get; set; }
         public ulong[] WatchChannels { get; set; }
+        public ulong ArchiveChannel { get; set; }
         public ulong UnclaimedTicketCategory { get; set; }
         public ulong ClaimedTicketCategory { get; set; }
         public ulong ClosedTicketCategory { get; set; }

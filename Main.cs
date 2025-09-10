@@ -14,7 +14,7 @@ namespace Frogger
                 new DiscordSocketConfig
                 {
                     GatewayIntents =
-                        GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent
+                        GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent | GatewayIntents.DirectMessages | GatewayIntents.GuildMembers
                 }
             );
             Config.ParseJson();
