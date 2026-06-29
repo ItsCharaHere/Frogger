@@ -1,11 +1,12 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using System.Text;
 
 namespace Frogger
 {
     internal class Export
     {
-        public static async Task<string> exportChat(SocketMessageComponent arg)
+        public static async Task<FileAttachment> exportChat(SocketMessageComponent arg)
         {
             using (StreamWriter channelExport = File.AppendText($".\\export\\{arg.ChannelId}.txt"))
             {
@@ -25,7 +26,7 @@ namespace Frogger
                     }
                 }
             }
-            return $".\\export\\{arg.ChannelId}.txt";
+            return new FileAttachment($".\\export\\{arg.ChannelId}.txt", $"{arg.ChannelId}.txt");
         }
     }
 }

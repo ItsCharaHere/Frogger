@@ -6,6 +6,7 @@ namespace Frogger
     {
         public static Config _config;
         public string Token { get; set; }
+        public string DBLocation { get; set; }
         public ulong Server { get; set; }
         public ulong ManagementRole { get; set; }
         public ulong MasterChannel { get; set; }
@@ -13,7 +14,6 @@ namespace Frogger
         public ulong ArchiveChannel { get; set; }
         public ulong UnclaimedTicketCategory { get; set; }
         public ulong ClaimedTicketCategory { get; set; }
-        public ulong ClosedTicketCategory { get; set; }
         public string[] Categories { get; set; }
 
         

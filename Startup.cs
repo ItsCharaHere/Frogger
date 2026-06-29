@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Microsoft.Data.Sqlite;
 
 namespace Frogger
 {
@@ -6,6 +7,8 @@ namespace Frogger
     {
         public static async Task<bool> Boot() 
         {
+            Sqlite.InitDB();
+            
             var MasterChannel = await Bot._client.GetChannelAsync(Config._config.MasterChannel);
             if (!Directory.Exists(".\\export")) 
             {

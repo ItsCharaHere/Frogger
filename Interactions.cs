@@ -29,16 +29,8 @@ namespace Frogger
 
         public static async Task<Task> HandleDropdownSelection(SocketMessageComponent arg)
         {
-            var ticketNum = 1;
+            var ticketNum = Sqlite.GetRowCount();
             var guild = Bot._client.GetGuild(Config._config.Server);
-            foreach (var channel in guild.TextChannels)
-            {
-                if (channel.Topic == null){ continue; }
-                if (channel.Topic.Contains(arg.Data.Values.First()))
-                {
-                    ticketNum++;
-                }
-            }
 
             List<Overwrite> permissions = new List<Overwrite>
             {
@@ -57,9 +49,9 @@ namespace Frogger
                 options.Topic = $"{arg.Data.Values.First()}||{arg.User.Id}";
             }
             );
-
+            Sqlite.CreateRow(ticketChannel.Id.ToString(), arg.User.Id.ToString());
             await ticketChannel.SendMessageAsync(text: $"Hello <@{arg.User.Id}>! Please describe your problem here! \n <@&{Config._config.ManagementRole}>", components: ConstructButtons());
-
+            await arg.RespondAsync("Done!", ephemeral: true);
             return Task.CompletedTask;
         }
 
@@ -82,52 +74,28 @@ namespace Frogger
                                     x.CategoryId = Config._config.ClaimedTicketCategory;
                                 });
                                 await channel.SendMessageAsync($"<@{arg.User.Id}> Has Claimed this ticket!");
+                                await arg.RespondAsync("Done", ephemeral: true);
                             }
+                            await arg.RespondAsync("Failed To claim ticket.", ephemeral: true);
                         }
                     }
                     break;
                 case "close": 
                     {
-                        List<Overwrite> permissions = new List<Overwrite>
+                        Sqlite.TicketRow row = Sqlite.RetrieveRowFromChannelId((int)channel.Id);
+                        FileAttachment exportPath = await Export.exportChat(arg);
+                        if (row.CreatorId != null)
                         {
-                            new Overwrite(guild.EveryoneRole.Id, PermissionTarget.Role,
-                                new OverwritePermissions(viewChannel: PermValue.Deny)),
-                            new Overwrite(Config._config.ManagementRole, PermissionTarget.Role,
-                                new OverwritePermissions(viewChannel: PermValue.Allow)),
-
-                        };
-                        foreach (var item in channel.PermissionOverwrites)
-                        {
-                            if (item.TargetType == PermissionTarget.User)
+                            SocketUser ticketAuthor = Bot._client.GetUser((ulong)row.CreatorId);
+                            if (ticketAuthor != null)
                             {
-                                permissions.Add(
-                                    new Overwrite(item.TargetId, PermissionTarget.Role,
-                                        new OverwritePermissions(viewChannel: PermValue.Deny))
-                                    );
+                                var tickerAuthorDM = await ticketAuthor.CreateDMChannelAsync();
+                                await tickerAuthorDM.SendFileAsync(exportPath, text: "Here is a chat export of your ticket!");
                             }
                         }
-                        await channel.ModifyAsync(x =>
-                        {
-                            x.CategoryId = Config._config.ClosedTicketCategory;
-                            x.PermissionOverwrites = permissions;
-                        });
-                        string exportPath = await Export.exportChat(arg);
-                        if (channel.Topic != "text")
-                        {
-                            var ticketAuthorId = channel.Topic.Split("||")[1];
-                            if (ticketAuthorId != null)
-                            {
-                                SocketUser ticketAuthor = Bot._client.GetUser(ulong.Parse(ticketAuthorId));
-                                if (ticketAuthor != null)
-                                {
-                                    var tickerAuthorDM = await ticketAuthor.CreateDMChannelAsync();
-                                    await tickerAuthorDM.SendFileAsync(exportPath, text: "Here is a chat export of your ticket!");
-                                }
-                            }
-                        }
-                        await archiveChannel.SendFileAsync(exportPath, text: $"Ticket Closed by <@{arg.User.Id}>, Message logs avaliable via attached file.");
-
-                        await channel.SendMessageAsync($"<@{arg.User.Id}> Has Closed this ticket!");
+                        await archiveChannel.SendFileAsync(exportPath, text: $"Ticket Closed, Message logs avaliable via attached file.");
+                        await arg.RespondAsync("Done", ephemeral: true);
+                        await channel.DeleteAsync();
                     }
                     break;
                 default: break; 
@@ -139,16 +107,9 @@ namespace Frogger
         {
             if (Config._config.WatchChannels.Contains(arg.Channel.Id))
             {
-                var ticketNum = 1;
+                var ticketNum = Sqlite.GetRowCount();
                 var guild = Bot._client.GetGuild(Config._config.Server);
-                foreach (var channel in guild.TextChannels)
-                {
-                    if (channel.Topic == null) { continue; }
-                    if (channel.Topic.Contains("text"))
-                    {
-                        ticketNum++;
-                    }
-                }
+                
 
                 List<Overwrite> permissions = new List<Overwrite>
                 {
@@ -157,14 +118,14 @@ namespace Frogger
                   new Overwrite(Config._config.ManagementRole, PermissionTarget.Role,
                       new OverwritePermissions(viewChannel: PermValue.Allow)),
                 };
-            
+                
                 var ticketChannel = await guild.CreateTextChannelAsync("ticket-text-message-" + ticketNum, options =>
                     {
                         options.CategoryId = Config._config.UnclaimedTicketCategory;
                         options.PermissionOverwrites = permissions;
-                        options.Topic = "text";
                     }
                 );
+                Sqlite.CreateRow(ticketChannel.Id.ToString(), null);
                 await ticketChannel.SendMessageAsync(text: $"<@&{Config._config.ManagementRole}> Watched Channel Ticket: \n {arg.Content}", components: ConstructButtons());
             }
             return Task.CompletedTask;
